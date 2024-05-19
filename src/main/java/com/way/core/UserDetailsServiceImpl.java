@@ -3,6 +3,7 @@ package com.way.core;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.way.bean.LoginUser;
 import com.way.bean.User;
+import com.way.mapper.MenuMapper;
 import com.way.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -20,6 +22,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    MenuMapper menuMapper;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -33,7 +38,13 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         }
         //TODO 根据用户查询权限信息 添加到LoginUser中
 
-        //封装成UserDetails对象返回
-        return new LoginUser(user);
+
+        //todo 根据用户查询权限信息，添加到LoginUser（实现UserDetails接口）
+//        List<String> list = new ArrayList<>(Arrays.asList("sys:hello"));
+        List<String> list = menuMapper.selectPermsByUserId(user.getId());
+        //封装UserDetails对象返回
+        LoginUser loginUser = new LoginUser(user,list);
+        return loginUser;
+
     }
 }

@@ -5,4 +5,6 @@ import com.way.utils.ResponseResult;
 
 public interface LoginServcie {
     public ResponseResult login(User user);
+
+    public ResponseResult logout();
 }

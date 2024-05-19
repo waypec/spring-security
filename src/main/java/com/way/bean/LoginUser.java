@@ -1,34 +1,55 @@
 package com.way.bean;
 
 
-import lombok.AllArgsConstructor;
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
 public class LoginUser  implements UserDetails {
 
     private User user;
 
+    private List<String> permissions;
+
+    public LoginUser(User user, List<String> permissions) {
+        this.user = user;
+        this.permissions = permissions;
+    }
+
+    //存储SpringSecurity所需要的权限信息的集合
+    @JSONField(serialize = false)
+    private List<GrantedAuthority> authorities;
+
     /**
      * 这个方法用来返回当前用户的角色/权限信息
-     *
+     * <p>
      * 在 Spring Security 中，无论是用户角色，还是用户权限，都是从这个方法返回的
+     *
      * @return
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
+        if (authorities != null) {
+            return authorities;
+        }
+        authorities = permissions.stream()
+                .map(permission -> new SimpleGrantedAuthority(permission))
+                .collect(Collectors.toList());
+        return authorities;
     }
 
     /**
      * 获取用户密码
+     *
      * @return
      */
     @Override
@@ -38,6 +59,7 @@ public class LoginUser  implements UserDetails {
 
     /**
      * 获取用户名
+     *
      * @return
      */
     @Override
@@ -47,8 +69,9 @@ public class LoginUser  implements UserDetails {
 
     /**
      * 账户是否没有过期
-     *
+     * <p>
      * 正常来说，数据库中应该也有一个描述账户是否过期的字段
+     *
      * @return
      */
     @Override
@@ -59,6 +82,7 @@ public class LoginUser  implements UserDetails {
 
     /**
      * 账户是否没有被锁定
+     *
      * @return
      */
     @Override
@@ -68,6 +92,7 @@ public class LoginUser  implements UserDetails {
 
     /**
      * 密码是否没有过期
+     *
      * @return
      */
     @Override
@@ -77,6 +102,7 @@ public class LoginUser  implements UserDetails {
 
     /**
      * 账户是否可用
+     *
      * @return
      */
     @Override

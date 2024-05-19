@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -27,13 +28,14 @@ public class LoginServcieImpl implements LoginServcie {
 
     /**
      * 登录验证接口
+     *
      * @param user
      * @return
      */
     @Override
     public ResponseResult login(User user) {
         UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(user.getUserName(),user.getPassword());
+                new UsernamePasswordAuthenticationToken(user.getUserName(), user.getPassword());
         Authentication authenticate = authenticationManager.authenticate(authenticationToken);
         //如果是空代表认证失败
         if (authenticate == null) {
@@ -44,10 +46,20 @@ public class LoginServcieImpl implements LoginServcie {
         //使用userID生成jwt返回给前端
         String userId = loginUser.getUser().getId().toString();
         String token = JwtUtil.createJWT(userId);
-        Map<String,String> map = new HashMap<>();
-        map.put("token",token);
+        Map<String, String> map = new HashMap<>();
+        map.put("token", token);
         //authenticate存入redis   超时时间1小时
-        redisCache.setCacheObject("login:"+userId,loginUser,1, TimeUnit.HOURS);
-        return  new ResponseResult(200,"登录成功",map);
+        redisCache.setCacheObject("login:" + userId, loginUser, 1, TimeUnit.HOURS);
+        return new ResponseResult(200, "登录成功", map);
     }
+
+    @Override
+    public ResponseResult logout() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        LoginUser loginUser = (LoginUser) authentication.getPrincipal();
+        Long userid = loginUser.getUser().getId();
+        redisCache.deleteObject("login:"+userid);
+        return new ResponseResult(200,"退出成功");
+    }
+
 }
